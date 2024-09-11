@@ -22,8 +22,9 @@ import {
   Title,
 } from "@mantine/core";
 
-import { Form, useForm, zodResolver } from "@mantine/form";
+import { useForm, zodResolver } from "@mantine/form";
 import { z } from "zod";
+// import errorMap from "zod/locales/en.js";
 
 const schema = z
   .object({
@@ -35,20 +36,23 @@ const schema = z
       .min(3, { message: "Last name must have at least 3 characters" }),
     email: z.string().email({ message: "Invalid email format" }),
     plan: z.enum(["funrun", "mini", "half", "full"], {
-      errorMap: (issue, ctx) => ({ message: "Please select a plan" }),
+      errorMap: () => ({ message: "Please select a plan" }),
     }),
     gender: z.enum(["male", "female"], {
-      errorMap: (issue, ctx) => ({ message: "Please choose a gender" }),
+      errorMap: () => ({ message: "Please choose a gender" }),
     }),
     acceptTermsAndConds: z.literal(true, {
       // message: "You must accept terms and conditions",
-      errorMap: (issue, ctx) => ({
+      errorMap: () => ({
         message: "You must accept terms and conditions",
       }),
     }),
     hasCoupon: z.boolean(),
     coupon: z.string(),
-    password: z.string(),
+    password: z
+      .string()
+      .min(6, { message: "Password must contain at least 6 characters" })
+      .max(12, { message: "Password must not exceed 12 characters" }),
     confirmPassword: z.string(),
   })
   .refine(
@@ -68,6 +72,15 @@ const schema = z
     {
       message: "Invalid coupon code",
       path: ["coupon"],
+    }
+  ).refine(
+    (data) => {
+      if (data.password === data.confirmPassword ) return true;
+      return false;
+    },
+    {
+      message: "Password does not match",
+      path: ["confirmPassword"],
     }
   );
 
@@ -96,10 +109,16 @@ export default function Home() {
     //TIP : get value of currently filled form with variable "form.values"
 
     if (form.values.plan === "funrun") price = 500;
+    if (form.values.plan === "mini") price = 800;
+    if (form.values.plan === "half") price = 1200;
+    if (form.values.plan === "full") price = 1500;
     //check the rest plans by yourself
     //TIP : check /src/app/libs/runningPlans.js
 
     //check discount here
+    if(form.values.hasCoupon && form.values.coupon === "CMU2023"){
+      price = price * 0.7;
+    }
 
     return price;
   };
@@ -114,7 +133,7 @@ export default function Home() {
         <Space h="lg" />
 
         {/* add form */}
-        <form onSubmit={form.onSubmit((v) => alert("See you at CMU Marathon"))}>
+        <form onSubmit={form.onSubmit(() => alert("See you at CMU Marathon"))}>
           <Stack gap="sm">
             <Group grow align="start">
               <TextInput
@@ -187,7 +206,7 @@ export default function Home() {
           </Stack>
         </form>
 
-        {/* <Footer year={2023} fullName="Chayanin Suatap" studentId="650610560" /> */}
+        { <Footer year={2024} fullName="Phirapart Yangna" studentId="660610780" /> }
       </Container>
 
       <TermsAndCondsModal opened={opened} close={close} />
